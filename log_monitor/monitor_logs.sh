@@ -18,7 +18,7 @@ ALERT_FILE="alerts.log"
 
 # add timestamp each entry
 # Search last 100 line to search keywords and appead to alerts.log
-MATCHES=$(tail -n 100 "$LOG_FILE" | grep -iE "$KEYWORDS")
+MATCHES=$(tail -n 100 "$LOG_FILE" | grep -iE "$KEYWORDS)"
 
 if [[ -n "$MATCHES" ]]; then
 	echo "[$(date)] checking $LOG_FILE for alerts..." >> "$ALERT_FILE"
