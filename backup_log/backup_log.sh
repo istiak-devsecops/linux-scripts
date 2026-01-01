@@ -1,5 +1,12 @@
 #!/bin/bash
 
+####################################
+# Author: Istiak Ahmed             #
+# Date and time: 1-January-2026    #
+####################################
+
+set -euo pipefail
+
 DIR_PATH="$1"
 BACKUP_DIR="$DIR_PATH/backups"
 TIMESTAMP=$(date +%Y-%m-%d_%H-%M-%S)

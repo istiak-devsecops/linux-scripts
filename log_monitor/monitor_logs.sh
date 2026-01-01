@@ -5,7 +5,7 @@
 # Date and time: 27 Aug 2025 9:16PM
 ####################################
 
-set -eo pipefail
+set -euo pipefail
 
 # === CONFIGURATION ===
 LOG_FILE="/var/log/syslog"

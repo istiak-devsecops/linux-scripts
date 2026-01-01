@@ -8,7 +8,7 @@
 # safety header {any command fails: -e | unset variable: -u | command fails in pipe command: -o pipefail } script stops
 set -euo pipefail 
 
-log_file="audit.log" # fileto store log data
+log_file="/home/arena/log/audit.log" # fileto store log data
 
 
 # log function logic to store log
@@ -49,8 +49,6 @@ check_log() {
 
 log "INFO" "Starting log hunter audit..." 
 
-read -p "Enter keyword to search for: " KEYWORD # user given keyword from prompt
-
 # by default if file exist touch just modify the timestamp
 touch "$log_file" 
 
@@ -60,17 +58,27 @@ if [[ ! -w "$log_file" ]]; then
     exit 1 # using exit code inside a if block won't trigger set -e logic
 fi
 
+# take keyword and arguments from the user and
+# check if user provide at least one keyword and file
+if [[ $# -lt 2 ]]; then
+    echo -e "[ERROR] Usage: $0 <keyword> <file1> <file2>..."
+    exit 1
+fi
+
+keyword="$1"
+shift   # shift the arguments to the left
+
 # take all the file name given as arguments and check them one by one
 for logfile in "$@"; do
     status=0
-    check_log "$logfile" "$KEYWORD" || status=$? 
+    check_log "$logfile" "$keyword" || status=$? 
     # if the check_log succeed the status code is already 0 if its anything rather than 0 then $? will store the exit code of last execution
 
     # store log data based on status code
     case "$status" in
-        0) log "INFO" "Keyword $KEYWORD found in: $logfile";;
+        0) log "INFO" "Keyword $keyword found in: $logfile";;
         1) log "ERROR" "Target file missing: $logfile";;
-        2) log "WARN" "keyword $KEYWORD not found in: $logfile";;
+        2) log "WARN" "keyword $keyword not found in: $logfile";;
     esac
 done
 
