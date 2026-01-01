@@ -8,6 +8,17 @@
 # safety header {any command fails: -e | unset variable: -u | command fails in pipe command: -o pipefail } script stops
 set -euo pipefail 
 
+# Function to run if script is interrupted
+cleanup() {
+    # Check if log_file is defined before trying to log to it
+    if [[ -n "${log_file:-}" ]]; then
+        echo "[$(date)] [WARN] SCRIPT INTERRUPTED! Cleaning up..." >> "$log_file"
+    fi
+    echo -e "\n[WARN] Interrupted! Exiting..." >&2
+    exit 1
+}
+trap cleanup 2 15
+
 # This ensures Cron can find your commands
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 # Dynamic Base Dir: Use provided BASE_DIR or default to /home/arena
