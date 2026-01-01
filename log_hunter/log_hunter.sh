@@ -8,8 +8,14 @@
 # safety header {any command fails: -e | unset variable: -u | command fails in pipe command: -o pipefail } script stops
 set -euo pipefail 
 
-log_file="/home/arena/log/audit.log" # fileto store log data
+# This ensures Cron can find your commands
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
+# configuration and counter
+log_file="/home/arena/log/audit.log" # fileto store log data
+info_count=0
+error_count=0
+warn_count=0
 
 # log function logic to store log
 log() {
@@ -50,6 +56,7 @@ check_log() {
 log "INFO" "Starting log hunter audit..." 
 
 # by default if file exist touch just modify the timestamp
+mkdir -p "$(dirname "$log_file")"
 touch "$log_file" 
 
 # check if the log file has write permission if doesn't change the permission
@@ -61,12 +68,13 @@ fi
 # take keyword and arguments from the user and
 # check if user provide at least one keyword and file
 if [[ $# -lt 2 ]]; then
-    echo -e "[ERROR] Usage: $0 <keyword> <file1> <file2>..."
+    echo -e "[ERROR] Usage: $0 <keyword> <file1> <file2>...">&2
     exit 1
 fi
 
 keyword="$1"
 shift   # shift the arguments to the left
+
 
 # take all the file name given as arguments and check them one by one
 for logfile in "$@"; do
@@ -76,12 +84,20 @@ for logfile in "$@"; do
 
     # store log data based on status code
     case "$status" in
-        0) log "INFO" "Keyword $keyword found in: $logfile";;
-        1) log "ERROR" "Target file missing: $logfile";;
-        2) log "WARN" "keyword $keyword not found in: $logfile";;
+        0) log "INFO" "Keyword $keyword found in: $logfile"
+        ((info_count++))
+        ;;
+        1) log "ERROR" "Target file missing: $logfile"
+        ((error_count++))
+        ;;
+        2) log "WARN" "keyword $keyword not found in: $logfile"
+        ((warn_count++))
+        ;;
     esac
 done
 
-log "INFO" "Audit completed. Detailed logs available in $log_file"
+log "INFO" "Audit completed. [Found $info_count] [Missing Target $error_count] [Not Found $warn_count] | Detailed logs available in $log_file"
 
-
+if [[ "$error_count" -gt 0 ]]; then
+    echo -e "!!! ALERT: Critical failures detected during audit !!!" >&2
+fi
