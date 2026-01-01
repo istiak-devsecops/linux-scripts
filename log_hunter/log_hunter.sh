@@ -10,12 +10,17 @@ set -euo pipefail
 
 # This ensures Cron can find your commands
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+# Dynamic Base Dir: Use provided BASE_DIR or default to /home/arena
+BASE_DIR="${BASE_DIR:-/home/arena}"
+log_file="$BASE_DIR/log/audit.log"
+MAX_SIZE="${MAX_SIZE:-102400}"
 
 # configuration and counter
-log_file="/home/arena/log/audit.log" # fileto store log data
 info_count=0
 error_count=0
 warn_count=0
+timestamp=$(date +"%Y-%m %H:%M:%S")
+
 
 # log function logic to store log
 log() {
@@ -33,6 +38,24 @@ log() {
         "ERROR") echo -e "[ERROR] $message" >&2;;
 
     esac
+}
+
+check_log_rotation() {
+    # Only rotate if the file exists
+    if [[ -f "$log_file" ]]; then
+        local size
+        size=$(stat -c%s "$log_file")
+        
+        if (( size > MAX_SIZE )); then
+            # Use a clean timestamp for the old file name
+            local rotate_ts
+            rotate_ts=$(date +"%Y%m%d_%H%M%S")
+            mv "$log_file" "${log_file}.${rotate_ts}"
+            touch "$log_file"
+            # We use echo here because log() would write to the new file
+            echo "[$(date)] [INFO] Log rotated. Old log saved as ${log_file}.${rotate_ts}" >> "$log_file"
+        fi
+    fi
 }
 
 # main log checking function
@@ -102,6 +125,6 @@ done
 
 log "INFO" "Audit completed. [Found $info_count] [Missing Target $error_count] [Not Found $warn_count]"
 echo "[| Detailed logs available in $log_file |]" >&2
-if [[ "$error_count" -gt 0 ]]; then
+if [[ "$info_count" -gt 0 ]]; then
     echo -e "!!! ALERT: Critical failures detected during audit !!!" >&2
 fi
