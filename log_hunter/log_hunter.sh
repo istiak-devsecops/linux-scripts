@@ -52,11 +52,6 @@ check_log() {
         return 2
     fi
 }
-
-log "INFO" "Starting log hunter audit..." 
-
-# by default if file exist touch just modify the timestamp
-mkdir -p "$(dirname "$log_file")"
 touch "$log_file" 
 
 # check if the log file has write permission if doesn't change the permission
@@ -75,6 +70,7 @@ fi
 keyword="$1"
 shift   # shift the arguments to the left
 
+log "INFO" "Starting log hunter audit..." 
 
 # take all the file name given as arguments and check them one by one
 for logfile in "$@"; do
@@ -84,20 +80,23 @@ for logfile in "$@"; do
 
     # store log data based on status code
     case "$status" in
-        0) log "INFO" "Keyword $keyword found in: $logfile"
-        ((info_count++))
-        ;;
-        1) log "ERROR" "Target file missing: $logfile"
-        ((error_count++))
-        ;;
-        2) log "WARN" "keyword $keyword not found in: $logfile"
-        ((warn_count++))
-        ;;
+        0) 
+            log "INFO" "Keyword $keyword found in: $logfile"
+            ((info_counter++)) || true
+            ;;
+        1) 
+            log "ERROR" "Target file missing: $logfile"
+            ((error_counter++)) || true
+            ;;
+        2) 
+            log "WARN" "keyword $keyword not found in: $logfile"
+            ((warn_counter++)) || true
+            ;;
     esac
 done
 
-log "INFO" "Audit completed. [Found $info_count] [Missing Target $error_count] [Not Found $warn_count] | Detailed logs available in $log_file"
-
+log "INFO" "Audit completed. [Found $info_count] [Missing Target $error_count] [Not Found $warn_count]"
+echo "[| Detailed logs available in $log_file |]" >&2
 if [[ "$error_count" -gt 0 ]]; then
     echo -e "!!! ALERT: Critical failures detected during audit !!!" >&2
 fi
