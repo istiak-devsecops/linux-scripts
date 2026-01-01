@@ -45,13 +45,19 @@ check_log() {
         return 1
     fi
 
-    # check the status of the keyword given
-    if grep -qi "$keyword" "$file" 2> /dev/null; then 
+    local count
+    count=$(grep -ic "$keyword" "$file" 2> /dev/null) || count=0
+
+  
+    if [[ "$count" -gt 0 ]]; then
+        echo "$count"
         return 0
     else
         return 2
     fi
 }
+
+
 touch "$log_file" 
 
 # check if the log file has write permission if doesn't change the permission
@@ -75,22 +81,21 @@ log "INFO" "Starting log hunter audit..."
 # take all the file name given as arguments and check them one by one
 for logfile in "$@"; do
     status=0
-    check_log "$logfile" "$keyword" || status=$? 
+    keyword_found=$(check_log "$logfile" "$keyword") || status=$? 
     # if the check_log succeed the status code is already 0 if its anything rather than 0 then $? will store the exit code of last execution
 
-    # store log data based on status code
     case "$status" in
-        0) 
-            log "INFO" "Keyword $keyword found in: $logfile"
-            ((info_counter++)) || true
+        0)
+            log "INFO" "Keyword '$keyword' found $keyword_found times in: $logfile"
+            ((info_count += keyword_found)) || true 
             ;;
-        1) 
-            log "ERROR" "Target file missing: $logfile"
-            ((error_counter++)) || true
+        1)
+            log "ERROR" "Target file missing!: $logfile"
+            ((error_count++)) || true
             ;;
-        2) 
-            log "WARN" "keyword $keyword not found in: $logfile"
-            ((warn_counter++)) || true
+        2)
+            log "WARN" "Keyword '$keyword' not found in: $logfile"
+            ((warn_count++)) || true
             ;;
     esac
 done
