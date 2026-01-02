@@ -40,6 +40,7 @@ log() {
         case "${level^^}" in
             "INFO") printf "[$level] $message" ;;
             "WARN") printf "[$level] $message" ;;
+            "ERROR") printf "[$level] $message" ;;
         esac
 }
 
@@ -58,12 +59,21 @@ fi
 
 # ==== Brain ====
 main() {
-    usage=$(df -h / | awk 'NR==2 {print $5}')
+    local target_dir="${1:-/}" # either it will be first arguments or /
 
-    if [ "${usage%\%}" -gt 80 ]; then
-        log "WARN" "Disk is almost full"
+    log "INFO" "Checking disk usage for: $target_dir"
+
+    if [[ ! -d "$target_dir" ]]; then # check if the given directory exist
+        log "ERROR" "Directory Doesn't exist"
+        exit 1
+    fi
+
+    local usage
+    usage=$(df -h "$target_dir" | awk 'NR==2 {print $5}')
+    if [[ "${usage%\%}" -gt 80 ]]; then
+        log "WARN" "Disk space critical on $target_dir: [Disk Uages] $usage"
     else
-        log "INFO" "Disk space is healthy"
+        log "INFO" "Disk space is healthy $target_dir: [Disk Usage] $usage"
     fi
 }
 
