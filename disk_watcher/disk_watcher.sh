@@ -35,32 +35,31 @@ log() {
         local timestamp
         timestamp=$(date +"%Y-%m-%d %H:%M:%S")
 
-        printf "[$timestamp] [$level] [$message]" >> "$logfile"
+        printf "[%s] [%s] %s\n" "$timestamp" "$level" "$message" >> "$logfile"
 
         case "${level^^}" in
-            "INFO") printf "[$level] $message" ;;
-            "WARN") printf "[$level] $message" ;;
-            "ERROR") printf "[$level] $message" ;;
+            "INFO") printf "[%s] %s\n" "[$level]" "$message" ;;
+            "WARN") printf "[%s] %s\n" "[$level]" "$message" ;;
+            "ERROR") printf "[%s] %s\n" "[$level]" "$message" ;;
         esac
 }
 
 
 # ==== Environment validation ====
-log_dir=$(dirname "$logfile")
+setup(){
+    local log_dir
+    log_dir=$(dirname "$logfile")
 
-if [[ ! -d "$log_dir" ]]; then # if the log dir doesn't exist create one
     mkdir -p "$log_dir"
-fi
-
-if [[ ! -f "$logfile" ]]; then # if the file doesn't exist create one
     touch "$logfile"
-fi
+}
 
 
 # ==== Brain ====
 main() {
-    local target_dir="${1:-/}" # either it will be first arguments or /
+    setup # Initialize environment
 
+    local target_dir="${1:-/}" # either it will be first arguments or /
     log "INFO" "Checking disk usage for: $target_dir"
 
     if [[ ! -d "$target_dir" ]]; then # check if the given directory exist
@@ -70,10 +69,11 @@ main() {
 
     local usage
     usage=$(df -h "$target_dir" | awk 'NR==2 {print $5}')
+
     if [[ "${usage%\%}" -gt 80 ]]; then
-        log "WARN" "Disk space critical on $target_dir: [Disk Uages] $usage"
+        log "WARN" "Disk space critical on $target_dir: $usage"
     else
-        log "INFO" "Disk space is healthy $target_dir: [Disk Usage] $usage"
+        log "INFO" "Disk space is healthy $target_dir: $usage"
     fi
 }
 
