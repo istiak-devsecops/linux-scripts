@@ -1,17 +1,42 @@
 #!/bin/bash
 
-echo "Starting file removal process..."
-read -p "Enter the path of the file to remove: " FILE_PATH
-if [[ -f "$FILE_PATH" ]];then
-    read -p "Are you sure you wants to remove $FILE_PATH? (y/n):" ACTION
+####################################
+# Author: Istiak Ahmed             #
+# Date and time: 3-January-2026    #
+####################################
 
-    if [[ "$ACTION" == "y" ]]; then
-        rm "$FILE_PATH"
-        echo "File '$FILE_PATH' has been removed."
-    else
-        echo "Action canceled. '$FILE_PATH' is safe."
-    fi
-else
-    echo "Error: '$FILE_PATH' doesn't exist or is not a file."
-    
+# ==== saftey header ====
+set -euo pipefail
+
+# ==== Environment Validation ====
+if [[ $# -eq 0 ]]; then
+    echo -e "Usage: $0 <file-to-remove>" >&2
+    exit 1
 fi
+
+# ==== Brain ====
+# Define a function to handle the removal of a single item safely
+remove_item() {
+    local target="$1"
+    
+    if [[ -f "$target" || -d "$target" ]]; then
+        rm -rf "$target"
+        echo -e "[SUCCESS] Removed: $target"
+    else
+        echo -e "[SKIP] '$target' does not exist or is not a regular file/dir" >&2
+    fi
+}
+
+main() {
+    echo "Starting removal process for $# items..."
+    
+    # Iterate through all arguments passed to the script
+    for item in "$@"; do
+        remove_item "$item"
+    done
+    
+    echo "Process complete."
+}
+
+# Execute main with all script arguments
+main "$@"
