@@ -27,18 +27,45 @@ log(){
     esac
 }
 
+# ==== cleanup ====
+cleanup() {
+    local exit_code=$?
+    if [[ "$exit_code" -ne 0 && "$exit_code" -ne 130 ]]; then
+        log "ERROR" "Script crashed or failed with exit code: $exit_code"
+    elif [[ "$exit_code" -eq 130 ]]; then
+        log "WARN" "Script stopped by user."
+    fi
+}
+
+trap cleanup EXIT
+trap 'exit 130' SIGINT
+
+# ==== Environment setup ====
+setup(){
+    local log_dir
+    log_dir=$(dirname "$logfile")
+
+    mkdir -p "$log_dir"
+    touch "$logfile"
+}
+
 # ==== Brain ====
 main(){
-    if [[ -z "$1" ]]; then
-        log "[ERROR]" "Arguments missing"
+    setup
+
+    local service="${1:-}"
+
+    if [[ -z "$service" ]]; then
+        log "ERROR" "Arguments missing! Usage: $0 <service_name>"
         exit 1
     fi
 
-    if pgrep -x "$1" > /dev/null; then
-        echo "UP"
+    if pgrep -x "$service" > /dev/null; then
+        log "INFO" "Service '$service' is UP"
     else
-        echo "DOWN"
+        log "WARN" "Service '$service' is DOWN"
     fi
 }
+
 main "$@"
 
