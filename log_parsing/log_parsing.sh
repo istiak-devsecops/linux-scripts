@@ -25,12 +25,10 @@ log() {
     local message="$2"
     local timestamp
     timestamp=$(date +"%Y-%m-%d %H:%M:%S")
-    
-    printf "[%s] [%s]: %s\n" "$timestamp" "$level" "$message"
 
     case "$level" in
-        "INFO") echo -e "$level" "$message" ;;
-        "ERROR") echo -e "$level" "$message" ;;
+        "INFO") printf "[%s]: [%s] %s\n" "$timestamp" "$level" "$message" ;;
+        "ERROR") printf "[%s]: [%s] %s\n" "$timestamp" "$level" "$message" ;;
     esac
 }
 
@@ -46,7 +44,7 @@ analyze_security() {
             if ($i == "status") status=$(i+1)
         }
         if (status == "failed") {
-            printf "Threat detected: User=$s, Origin=%s\n", user, ip
+            printf "Threat detected: User=%s, Origin=%s\n", user, ip
             }
     }' "$log_file"
 }
