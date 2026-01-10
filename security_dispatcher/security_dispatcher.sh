@@ -7,19 +7,26 @@
 
 set -euo pipefail
 
-# ==== configuration ====
+# ==== log template ====
+log() { echo "[$(date +'%H:%M:%S')] [$1] $2"; }
+
+
+# ==== safety check ====
+safety_check() {
 # Loading .env safely
 if [[ -f ".env" ]]; then
     set -a 
     source .env
     set +a
 else
-    echo "Error: .env file missing"
-    exit 1
+    # If no .env, check if the variable is already in the system (Remote Server/CI/CD)
+    if [[ -z "${WEBHOOK_URL:-}" ]]; then
+        log "ERROR" "WEBHOOK_URL is not set in .env OR system environment."
+        exit 1
+    fi
 fi
-
-# ==== log template ====
-log() { echo "[$(date +'%H:%M:%S')] [$1] $2"; }
+}
+safety_check
 
 # ==== alert notification ====
 dispatch_alert() {
