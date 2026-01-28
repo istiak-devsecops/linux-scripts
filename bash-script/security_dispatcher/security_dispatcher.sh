@@ -26,7 +26,7 @@ else
     fi
 fi
 }
-safety_check
+safety_checks
 
 # ==== alert notification ====
 dispatch_alert() {
