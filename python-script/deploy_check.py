@@ -3,8 +3,22 @@ import sys
 import logging
 
 # 1. Setup Logger 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
-logger = logging.getLogger(__name__)
+def setup_automation_logging():
+    # 1. Define the format: Time - Level - Message
+    log_format = '%(asctime)s - %(levelname)s: %(message)s'
+    
+    # 2. Configure the root logger
+    logging.basicConfig(
+        level=logging.INFO,        # Set the minimum level to capture
+        format=log_format,
+        handlers=[
+            logging.StreamHandler(sys.stdout) # Send to terminal
+        ]
+    )
+    return logging.getLogger(__name__)
+
+# Usage
+logger = setup_automation_logging()
 
 # 2. Define a Machine 
 def check_environment():
